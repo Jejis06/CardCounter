@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Settings - Card Counter</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header class="top-bar">
+            <a href="index.html" class="icon-button" aria-label="Back">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <h1 class="logo">Settings</h1>
+            <button id="theme-toggle-btn" class="icon-button" aria-label="Toggle Theme"></button>
+        </header>
+
+        <main class="settings-area">
+            <form id="settings-form">
+                <div class="setting-group">
+                    <label for="num-decks">Number of Decks (1-8)</label>
+                    <input type="number" id="num-decks" name="num_decks" min="1" max="8" value="1" class="input-field">
+                </div>
+
+                <div class="setting-group">
+                    <h2>Card Values</h2>
+                    <p class="subtitle">Customize the counting values for card ranks.</p>
+                    
+                    <div class="values-grid" id="card-values-grid">
+                        <!-- Populated dynamically by JS -->
+                    </div>
+                </div>
+
+                <div class="actions center-actions">
+                    <button type="submit" class="primary-button save-button">Save & Restart Game</button>
+                    <button type="button" id="reset-btn" class="primary-button" style="margin-left: 12px;">Reset Defaults</button>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+            const DEFAULT_VALUES = {
+                '2': 1, '3': 1, '4': 1, '5': 1, '6': 1,
+                '7': 0, '8': 0, '9': 0,
+                '10': -1, 'J': -1, 'Q': -1, 'K': -1, 'A': -1
+            };
+
+            // Load current settings from localStorage
+            const settings = JSON.parse(localStorage.getItem('cardCounterSettings') || '{}');
+            const customValues = settings.customValues || DEFAULT_VALUES;
+            
+            document.getElementById('num-decks').value = settings.numDecks || 1;
+            
+            const gridEl = document.getElementById('card-values-grid');
+            RANKS.forEach(rank => {
+                const val = customValues[rank] ?? DEFAULT_VALUES[rank];
+                
+                const itemEl = document.createElement('div');
+                itemEl.className = 'value-item card-style';
+                itemEl.innerHTML = `
+                    <span class="card-rank-label">${rank}</span>
+                    <input type="number" id="val-${rank}" class="input-field small-input" value="${val}">
+                `;
+                gridEl.appendChild(itemEl);
+            });
+
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                localStorage.removeItem('cardCounterSettings');
+                localStorage.removeItem('cardCounterState'); // Force state reset on defaults
+                window.location.reload();
+            });
+
+            document.getElementById('settings-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const numDecks = parseInt(document.getElementById('num-decks').value);
+                
+                const newCustomValues = {};
+                RANKS.forEach(rank => {
+                    newCustomValues[rank] = parseInt(document.getElementById(`val-${rank}`).value) || 0;
+                });
+                
+                const newSettings = {
+                    numDecks: numDecks,
+                    customValues: newCustomValues
+                };
+                
+                localStorage.setItem('cardCounterSettings', JSON.stringify(newSettings));
+                // Clear old state so it forces a reshuffle with new settings
+                localStorage.removeItem('cardCounterState');
+                
+                window.location.href = 'index.html';
+            });
+        });
+    </script>
+    <script src="static/js/theme.js"></script>
+</body>
+</html>
